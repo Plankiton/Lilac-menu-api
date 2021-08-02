@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	Http "net/http"
@@ -11,7 +11,7 @@ import (
 	mysql "gorm.io/driver/mysql"
 )
 
-func Setup() Http.Handler {
+func main() {
 	driver, uri := mysql.Open, Sex.GetEnv("PREAMAR_DATABASE_URL", "test.db")
 	if Sex.GetEnv("SEX_DEBUG", "false") != "false" {
 		driver, uri = SexDB.Sqlite, "test.db"
@@ -50,7 +50,7 @@ func Setup() Http.Handler {
 		return cats
 	})
 
-	return Cors(pistol)
+	Sex.Err(Http.ListenAndServe(":8000", Cors(pistol)))
 }
 
 func Cap(t string) string {

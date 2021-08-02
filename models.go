@@ -1,4 +1,4 @@
-package api
+package main
 import SexDB "github.com/Plankiton/SexPistol/Cartridge"
 
 type Category struct {
