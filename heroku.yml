@@ -2,4 +2,5 @@ build:
   docker:
     web: Dockerfile
 run:
-  web: /PraAmar/PraAmar $PORT
+  docker:
+    web: /PraAmar/PraAmar $PORT
