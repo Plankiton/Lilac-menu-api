@@ -1,0 +1,20 @@
+version: "3.1"
+services:
+  api:
+    environment:
+      - PREAMAR_DATABASE_URL=
+      - SEX_DEBUG=true
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: preamar:api
+    working_dir: /PreAmar/
+    tty: true
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - 8000:8000
+    volumes:
+      - ./:/PreAmar
+    command: air
