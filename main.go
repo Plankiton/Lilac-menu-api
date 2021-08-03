@@ -2,7 +2,8 @@ package main
 
 import (
 
-	//StrConv "strconv"
+	Http "net/http"
+	StrConv "strconv"
 	Str "strings"
 
 	Sex "github.com/Plankiton/SexPistol"
@@ -33,9 +34,20 @@ func main() {
 			return nil
 		}
 
+		page, err := StrConv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			page = 1
+		}
+
+		limit, err := StrConv.Atoi(r.URL.Query().Get("limit"))
+		if err != nil {
+			limit = 10
+		}
+
 		for c, cat := range cats {
 			db.Joins("join categoria cat on cat.ID = id_categoria").
-			
+			Offset((page - 1) * limit).
+			Limit(limit).
 			Find(&cat.Meals)
 			cat.Name = Cap(cat.Name)
 			for m, meal := range cat.Meals {
@@ -49,8 +61,8 @@ func main() {
 		return cats
 	})
 
-	// Sex.Err(Http.ListenAndServe(":8000", Cors(pistol)))
-	Sex.Err(pistol.Run(Cors))
+	Sex.Err(Http.ListenAndServe(":8000", Cors(pistol)))
+	// Sex.Err(pistol.Run(Cors))
 }
 
 func Cap(t string) string {
