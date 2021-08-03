@@ -1,7 +1,6 @@
 package main
 
 import (
-	Http "net/http"
 
 	//StrConv "strconv"
 	Str "strings"
@@ -50,7 +49,8 @@ func main() {
 		return cats
 	})
 
-	Sex.Err(Http.ListenAndServe(":8000", Cors(pistol)))
+	// Sex.Err(Http.ListenAndServe(":8000", Cors(pistol)))
+	Sex.Err(pistol.Run(Cors))
 }
 
 func Cap(t string) string {
