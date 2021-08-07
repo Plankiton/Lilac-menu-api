@@ -29,11 +29,6 @@ func main() {
 
 	pistol := Sex.NewPistol().
 	Add("/", func (r Sex.Request) Sex.Json {
-		cats := [] Category {}
-		if db.Find(&cats).Error != nil {
-			return nil
-		}
-
 		page, err := StrConv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
 			page = 1
@@ -42,6 +37,35 @@ func main() {
 		limit, err := StrConv.Atoi(r.URL.Query().Get("limit"))
 		if err != nil {
 			limit = 10
+		}
+
+		cat, err := StrConv.Atoi(r.URL.Query().Get("cat"))
+		if err != nil {
+			cat = 0
+		}
+
+		if cat != 0 {
+			cat := Category {}
+			if db.First(&cat, "id = ?", cat).Error != nil {
+				return nil
+			}
+
+			db.Joins("join categoria cat on cat.ID = id_categoria").
+			Offset((page - 1) * limit).
+			Limit(limit).
+			Find(&cat.Meals)
+			cat.Name = Cap(cat.Name)
+			for m, meal := range cat.Meals {
+				cat.Meals[m].Name = Cap(meal.Name)
+				cat.Meals[m].Desc = Cap(meal.Desc)
+			}
+
+			return cat
+		}
+
+		cats := [] Category {}
+		if db.Find(&cats).Error != nil {
+			return nil
 		}
 
 		for c, cat := range cats {
