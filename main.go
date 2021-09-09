@@ -61,10 +61,18 @@ func main() {
 				return nil
 			}
 
-			db.Joins("join categoria cat on cat.ID = id_categoria").
+			db.
+				Where("id_categoria = ?", cat.ID).
+				Joins("join categoria cat on cat.ID = id_categoria").
 				Offset((page - 1) * limit).
 				Limit(limit).
 				Find(&cat.Meals)
+
+			db.Model(Meal{}).
+				Where("id_categoria = ?", cat.ID).
+				Joins("join categoria cat on cat.ID = id_categoria").
+				Count(&cat.Len)
+
 			cat.Name = Cap(cat.Name)
 			for m, meal := range cat.Meals {
 				cat.Meals[m].Name = Cap(meal.Name)
@@ -94,10 +102,10 @@ func main() {
 			}
 
 			for i, cat := range cats {
-				db.Joins("join categoria cat on cat.ID = id_categoria").
-					Offset((page-1)*limit).
+				db.Joins("join categoria cat on cat.ID = id_categoria and cat.ID = ?", cat.ID).
+					Offset((page - 1) * limit).
 					Limit(limit).
-					Find(&cat.Meals, "id_categoria = ?", cat.ID)
+					Find(&cat.Meals)
 				cat.Name = Cap(cat.Name)
 
 				db.Model(Meal{}).
