@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	Http "net/http"
 	StrConv "strconv"
 	Str "strings"
@@ -28,32 +27,44 @@ func main() {
 	)
 
 	pistol := Sex.NewPistol().
-	Add("/", func (r Sex.Request) Sex.Json {
-		page, err := StrConv.Atoi(r.URL.Query().Get("page"))
-		if err != nil {
-			page = 1
-		}
+		Add("/cats", func(r Sex.Request) Sex.Json {
+			cats := []Category{}
+			if err := db.Find(&cats).Error; err != nil {
+				return nil
+			}
 
-		limit, err := StrConv.Atoi(r.URL.Query().Get("limit"))
-		if err != nil {
-			limit = 10
-		}
+			for i, cat := range cats {
+				cats[i].Name = Cap(cat.Name)
+				cats[i].Index = i
+			}
 
-		cat, err := StrConv.Atoi(r.URL.Query().Get("cat"))
-		if err != nil {
-			cat = 0
-		}
+			return cats
+		}).
+		Add(`/cat/{id}/meals`, func(r Sex.Request) Sex.Json {
+			page, err := StrConv.Atoi(r.URL.Query().Get("page"))
+			if err != nil {
+				page = 1
+			}
 
-		if cat != 0 {
-			cat := Category {}
-			if db.First(&cat, "id = ?", cat).Error != nil {
+			limit, err := StrConv.Atoi(r.URL.Query().Get("limit"))
+			if err != nil {
+				limit = 10
+			}
+
+			catId, err := StrConv.Atoi(r.PathVars["id"])
+			if err != nil {
+				catId = 0
+			}
+
+			cat := Category{}
+			if db.First(&cat, "id = ?", catId).Error != nil {
 				return nil
 			}
 
 			db.Joins("join categoria cat on cat.ID = id_categoria").
-			Offset((page - 1) * limit).
-			Limit(limit).
-			Find(&cat.Meals)
+				Offset((page - 1) * limit).
+				Limit(limit).
+				Find(&cat.Meals)
 			cat.Name = Cap(cat.Name)
 			for m, meal := range cat.Meals {
 				cat.Meals[m].Name = Cap(meal.Name)
@@ -61,32 +72,49 @@ func main() {
 			}
 
 			return cat
-		}
-
-		cats := [] Category {}
-		if db.Find(&cats).Error != nil {
-			return nil
-		}
-
-		for c, cat := range cats {
-			db.Joins("join categoria cat on cat.ID = id_categoria").
-			Offset((page - 1) * limit).
-			Limit(limit).
-			Find(&cat.Meals)
-			cat.Name = Cap(cat.Name)
-			for m, meal := range cat.Meals {
-				cat.Meals[m].Name = Cap(meal.Name)
-				cat.Meals[m].Desc = Cap(meal.Desc)
+		}).
+		Add(`/meals`, func(r Sex.Request) Sex.Json {
+			page, err := StrConv.Atoi(r.URL.Query().Get("page"))
+			if err != nil {
+				page = 1
 			}
 
-			cats[c] = cat
-		}
+			limit, err := StrConv.Atoi(r.URL.Query().Get("limit"))
+			if err != nil {
+				limit = 10
+			}
 
-		return cats
-	})
+			cats := []*Category{}
+			if err := db.
+				Offset((page - 1) * limit).
+				Limit(limit).
+				Find(&cats).
+				Error; err != nil {
+				return Sex.Bullet{
+					Message: err.Error(),
+				}
+			}
 
+			limit = 10
+			for i, cat := range cats {
+				db.Joins("join categoria cat on cat.ID = id_categoria").
+					Offset((page-1)*limit).
+					Limit(limit).
+					Find(&cat.Meals, "id_categoria = ?", cat.ID)
+				cat.Name = Cap(cat.Name)
+				for m, meal := range cat.Meals {
+					cat.Meals[m].Name = Cap(meal.Name)
+					cat.Meals[m].Desc = Cap(meal.Desc)
+				}
+
+				cats[i].Index = i
+			}
+
+			return cats
+		})
+
+	// go Sex.Err(pistol.Run(Cors))
 	Sex.Err(Http.ListenAndServe(":8000", Cors(pistol)))
-	// Sex.Err(pistol.Run(Cors))
 }
 
 func Cap(t string) string {
@@ -94,6 +122,5 @@ func Cap(t string) string {
 		return Str.ToUpper(t)
 	}
 
-	return Str.ToUpper(t[:1])+Str.ToLower(t[1:])
+	return Str.ToUpper(t[:1]) + Str.ToLower(t[1:])
 }
-
