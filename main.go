@@ -86,8 +86,6 @@ func main() {
 
 			cats := []*Category{}
 			if err := db.
-				Offset((page - 1) * limit).
-				Limit(limit).
 				Find(&cats).
 				Error; err != nil {
 				return Sex.Bullet{
@@ -95,13 +93,18 @@ func main() {
 				}
 			}
 
-			limit = 10
 			for i, cat := range cats {
 				db.Joins("join categoria cat on cat.ID = id_categoria").
 					Offset((page-1)*limit).
 					Limit(limit).
 					Find(&cat.Meals, "id_categoria = ?", cat.ID)
 				cat.Name = Cap(cat.Name)
+
+				db.Model(Meal{}).
+					Where("id_categoria = ?", cat.ID).
+					Joins("join categoria cat on cat.ID = id_categoria").
+					Count(&cat.Len)
+
 				for m, meal := range cat.Meals {
 					cat.Meals[m].Name = Cap(meal.Name)
 					cat.Meals[m].Desc = Cap(meal.Desc)
