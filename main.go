@@ -17,6 +17,7 @@ func main() {
 	}
 
 	db, err := SexDB.Open(uri, driver)
+	db.SetLogLevel("info")
 	if err != nil {
 		Sex.Die(err)
 	}
@@ -92,6 +93,35 @@ func main() {
 				limit = 10
 			}
 
+			if query := r.URL.Query().Get("query"); query != "" {
+				query = "%" + query + "%"
+
+				meals := []Meal{}
+				if err := db.
+					Where("produtos.descricao like ? or produtos.descricao_detalhada like ?", query, query).
+					Find(&meals).
+					Error; err != nil {
+					return Sex.Bullet{
+						Message: err.Error(),
+					}
+				}
+
+				for i, meal := range meals {
+					if err := db.
+						Joins("join produtos meal on meal.id_categoria = categoria.id").
+						First(&meal.Cat, "categoria.id = ?", meal.CatID).
+						Error; err != nil {
+						return Sex.Bullet{
+							Message: err.Error(),
+						}
+					}
+
+					meals[i] = meal
+				}
+
+				return meals
+			}
+
 			cats := []*Category{}
 			if err := db.
 				Find(&cats).
@@ -102,7 +132,8 @@ func main() {
 			}
 
 			for i, cat := range cats {
-				db.Joins("join categoria cat on cat.ID = id_categoria and cat.ID = ?", cat.ID).
+				db.
+					Joins("join categoria cat on cat.ID = id_categoria and cat.ID = ?", cat.ID).
 					Offset((page - 1) * limit).
 					Limit(limit).
 					Find(&cat.Meals)

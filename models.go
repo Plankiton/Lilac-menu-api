@@ -18,7 +18,8 @@ type Meal struct {
 	Desc  string  `json:"Desc,omitempty" gorm:"column:descricao_detalhada"`
 	Price float64 `json:"Price,omitempty" gorm:"column:preco_venda"`
 
-	CatID uint `json:"-" gorm:"column:id_categoria"`
+	CatID uint     `json:"-" gorm:"column:id_categoria"`
+	Cat   Category `json:"cat" gorm:"-"`
 }
 
 func (*Category) TableName() string {
