@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	driver, uri := mysql.Open, Sex.GetEnv("PREAMAR_DATABASE_URL", "test.db")
+	driver, uri := mysql.Open, Sex.GetEnv("PREAMAR_DATABASE_URL", "")
 	if Sex.GetEnv("SEX_DEBUG", "false") != "false" {
 		driver, uri = SexDB.Sqlite, "test.db"
 	}
